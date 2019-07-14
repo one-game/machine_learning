@@ -5,24 +5,27 @@
 @Author: bill
 @LastEditors: Please set LastEditors
 @Date: 2019-03-31 00:13:46
-@LastEditTime: 2019-07-14 21:00:18
+@LastEditTime: 2019-07-14 23:57:22
 '''
 
 import numpy as np
 import pandas as pd
 import math
 from sklearn.datasets import load_iris,load_boston
+from LinearRegression import LinearRegression
 
-class LinearRegression():
+class FM(LinearRegression):
 
-    def __init__(self, feature_num,lr = 0.001, batch_size=1, epochs= 500 ,iter_show_info=320):
+    def __init__(self, feature_num,lr = 0.001, batch_size=1, epochs= 500, k=50,iter_show_info=320):
         self._lr = lr
+        self._k = k
         self._W = None
         self._batch_size = batch_size
         self._epochs = epochs
         self._iter_show_info = iter_show_info
         print("init weight")
         self._W = np.random.normal(size=(feature_num + 1) )
+        self._V = np.random.normal(size=(feature_num, self._k))
         print(self._W)
 
     def train(self, X, Y):
@@ -44,7 +47,11 @@ class LinearRegression():
 
     
     def forward(self, X):
-        output = np.dot(X, self._W.T ) 
+        inter_1 = X *  self._V
+        inter_1 = inter_1 * inter_1
+        inter_2 = X*X *(self._V*self._V)
+        interaction =(inter_1 - inter_2).sum() / 2
+        output = np.dot(X, self._W.T )  + interaction
         return output
     
     def backward(self, X, Y):
@@ -59,7 +66,10 @@ class LinearRegression():
     def get_gradient(self, X, Y):
         forward_output = self.forward( X)
         grad = (X.T*(Y - forward_output)).mean(axis=1)
-        return grad
+
+        #return two part first part is w
+        #the second part is V
+        return grad, 
     
     def metric(self, X,Y):
         X = np.column_stack([X, np.ones(X.shape[0])])
